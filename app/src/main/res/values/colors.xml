@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="grey">#FFEBCA</color>
+
+
+    <!-- Primary Colors -->
+    <color name="colorPrimary">#353CFE</color>
+    <color name="colorPrimaryDark">#1565C0</color>
+    <color name="colorAccent">#FFC107</color>
+
+    <!-- Background and Surface -->
+    <color name="backgroundColor">#F5F5F5</color>
+    <color name="surfaceColor">#FFFFFF</color>
+
+    <!-- Text Colors -->
+    <color name="textColor">#212121</color>
+    <color name="textColor2">#757575</color>
+
+    <!-- Miscellaneous -->
+    <color name="errorColor">#D32F2F</color>
+    <color name="dividerColor">#E0E0E0</color>
+
+    <color name="backArrow">#000000</color>
+
+    <color name="fab">#0797D2</color>
+
+
+
+</resources>

@@ -1,0 +1,50 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.FileManager" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary Colors -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+
+        <!-- Background and Surface -->
+        <item name="android:windowBackground">@color/backgroundColor</item>
+        <item name="android:colorBackground">@color/backgroundColor</item>
+        <item name="colorSurface">@color/surfaceColor</item>
+
+        <!-- Text Colors -->
+        <item name="android:textColor">@color/textColor</item>
+
+        <!-- ActionMode Background -->
+        <item name="actionModeBackground">@color/colorPrimary</item>
+
+        <!-- Divider Color -->
+        <item name="dividerColor">@color/dividerColor</item>
+
+        <!-- Error Color -->
+        <item name="colorError">@color/errorColor</item>
+
+
+    </style>
+
+
+    <!-- Primary Colors -->
+    <color name="colorPrimary">#3A3FBE</color>
+    <color name="colorPrimaryDark">#121A3A</color>
+    <color name="colorAccent">#FFC107</color>
+
+    <!-- Background and Surface -->
+    <color name="backgroundColor">#121212</color>
+    <color name="surfaceColor">#1E1E1E</color>
+
+    <!-- Text Colors -->
+    <color name="textColor">#E0E0E0</color>
+    <color name="textColor2">#B0B0B0</color>
+
+    <!-- Miscellaneous -->
+    <color name="errorColor">#EF5350</color>
+    <color name="dividerColor">#292929</color>
+
+    <color name="backArrow">#FBFBFB</color>
+    <color name="fab">#00ACFF</color>
+
+</resources>

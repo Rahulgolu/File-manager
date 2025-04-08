@@ -1,0 +1,28 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.FileManager" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!--<item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+
+        &lt;!&ndash; Background and Surface &ndash;&gt;
+        <item name="android:windowBackground">@color/backgroundColor</item>
+        <item name="android:colorBackground">@color/backgroundColor</item>
+        <item name="colorSurface">@color/surfaceColor</item>
+
+        &lt;!&ndash; Text Colors &ndash;&gt;
+        <item name="android:textColor">@color/textColor</item>
+
+        &lt;!&ndash; ActionMode Background &ndash;&gt;
+        <item name="actionModeBackground">@color/colorPrimary</item>
+
+        &lt;!&ndash; Divider Color &ndash;&gt;
+        <item name="dividerColor">@color/dividerColor</item>
+
+        &lt;!&ndash; Error Color &ndash;&gt;
+        <item name="colorError">@color/errorColor</item>-->
+    </style>
+
+    <style name="Theme.FileManager" parent="Base.Theme.FileManager" />
+</resources>
