@@ -1,11 +1,14 @@
 package com.example.filemanager;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StatFs;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -61,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
     private FastAdapter<RecentAdapter> recentFastAdapter;
     private ItemAdapter<RecentAdapter> recentItemAdapter;
     private List<RecentAdapter> recentList;
-    private String rootFile;
     private ProgressBar progressBar;
 
     @Override
@@ -79,14 +81,12 @@ public class MainActivity extends AppCompatActivity {
         fastAdapter = FastAdapter.with(itemAdapter);
         categoryList = new ArrayList<>();
 
-        rootFile = Environment.getExternalStorageDirectory().getAbsolutePath();
-
         recentItemAdapter = new ItemAdapter<>();
         recentFastAdapter = FastAdapter.with(recentItemAdapter);
         recentList = new ArrayList<>();
         binding.recRecent.setLayoutManager(new LinearLayoutManager(this,LinearLayoutManager.HORIZONTAL,false));
         binding.recRecent.setAdapter(recentFastAdapter);
-        loadRecentFiles(rootFile);
+        loadRecentFiles();
 
         itemfileAdapter = new ItemAdapter<>();
         searchAdapter = new SearchAdapter(itemfileAdapter,this);
@@ -147,30 +147,49 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void loadRecentFiles(String path) {
+    private void loadRecentFiles() {
         progressBar.setVisibility(View.VISIBLE);
-        rootFile = path;
-        File directory = new File(rootFile);
-        if (!directory.exists() && !directory.isDirectory()) {
-         //   Log.e("RecentFiles", "Directory does not exist " + rootFile);
-            progressBar.setVisibility(View.GONE);
-            return;
-        }
-        executorService.execute(() ->{
-            List<File> imageFiles = new ArrayList<>();
-            searchForImages(directory, imageFiles);
 
-            Collections.sort(imageFiles,(f1,f2)-> {
-                return Long.compare(f2.lastModified(), f1.lastModified());
-            });
-            List<File> lastTwen =imageFiles.subList(0,Math.min(imageFiles.size(),15));
+        executorService.execute(() -> {
             List<RecentAdapter> tempRecentList = new ArrayList<>();
-            for (File file : lastTwen) {
-                FileAdapter fileAdapter = new FileAdapter(file, this);
-                tempRecentList.add(new RecentAdapter(fileAdapter, this));
+
+            Uri[] mediaUris = {
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            };
+
+            String[] projection = {
+                    MediaStore.MediaColumns.DATA,
+                    MediaStore.MediaColumns.DATE_MODIFIED
+            };
+
+            String sortOrder = MediaStore.MediaColumns.DATE_MODIFIED + " DESC";
+
+            for (Uri mediaUri : mediaUris) {
+                try (Cursor cursor = getContentResolver().query(
+                        mediaUri,
+                        projection,
+                        null,
+                        null,
+                        sortOrder
+                )) {
+                    if (cursor != null) {
+                        int pathIndex = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+
+                        while (cursor.moveToNext()) {
+                            String filePath = cursor.getString(pathIndex);
+                            File file = new File(filePath);
+                            if (file.exists()) {
+                                FileAdapter fileAdapter = new FileAdapter(file, this);
+                                tempRecentList.add(new RecentAdapter(fileAdapter, this));
+
+                            }
+                        }
+                    }
+                }
             }
 
-            mainHandler.post(() ->{
+            mainHandler.post(() -> {
                 recentList.clear();
                 recentList.addAll(tempRecentList);
                 recentItemAdapter.clear();
@@ -178,11 +197,8 @@ public class MainActivity extends AppCompatActivity {
                 recentFastAdapter.notifyAdapterDataSetChanged();
                 progressBar.setVisibility(View.GONE);
             });
-
         });
-
-
-        }
+    }
 
     private void searchForImages(File dir, List<File> mediaFiles) {
         File[] files = dir.listFiles();

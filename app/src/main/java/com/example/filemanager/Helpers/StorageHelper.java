@@ -59,7 +59,7 @@ public class StorageHelper {
         return totalSize;
     }*/
 
-    private static boolean matchesCategory(File file, String category) {
+    /*private static boolean matchesCategory(File file, String category) {
         String name = file.getName().toLowerCase();
         switch (category) {
             case "Images":
@@ -77,7 +77,7 @@ public class StorageHelper {
             default:
                 return false;
         }
-    }
+    }*/
 
     public static String formatSize(long size) {
         if (size < 1024) return size + " B";

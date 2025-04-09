@@ -41,7 +41,6 @@ public class FileUtils {
         return file.renameTo(newFile);
     }
 
-    // Delete a file or directory
     public static boolean deleteFile(File file) {
         if (file.isDirectory()) {
             File[] children = file.listFiles();
@@ -55,13 +54,13 @@ public class FileUtils {
     }
 
     // Get file size in readable format
-    public static String getFileSize(File file) {
+   /* public static String getFileSize(File file) {
         long bytes = file.length();
         if (bytes < 1024) return bytes + " B";
         int exp = (int) (Math.log(bytes) / Math.log(1024));
         String pre = ("KMGTPE").charAt(exp - 1) + "B";
         return String.format("%.1f %s", bytes / Math.pow(1024, exp), pre);
-    }
+    }*/
 
     public static Uri getFileUri(Context context, File file) {
         return FileProvider.getUriForFile(
