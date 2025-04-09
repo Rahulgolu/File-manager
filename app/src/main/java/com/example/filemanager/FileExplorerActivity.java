@@ -226,7 +226,6 @@ public class FileExplorerActivity extends AppCompatActivity {
         closeSelection.setOnClickListener(v -> exitSelectionMode());
         selectionToolbar.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
-
             Set<FileAdapter> selectedItems = selectExtension.getSelectedItems();
 
             if (selectedItems.isEmpty()) {

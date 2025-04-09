@@ -37,7 +37,7 @@ public class StorageHelper {
         return (currentTime - lastUpdateTime) > 24 * 60 * 60 * 1000;
     }
 
-    public static long computeCategorySize(String category) {
+   /* public static long computeCategorySize(String category) {
         File storageDir = Environment.getExternalStorageDirectory();
         return getFilesSizeRecursive(storageDir, category);
     }
@@ -57,7 +57,7 @@ public class StorageHelper {
             }
         }
         return totalSize;
-    }
+    }*/
 
     private static boolean matchesCategory(File file, String category) {
         String name = file.getName().toLowerCase();
@@ -146,6 +146,52 @@ public class StorageHelper {
         List<File> categoryFiles = new ArrayList<>();
         getFilesRecursive(storageDir, category, categoryFiles);
         return categoryFiles;*/
+    }
+
+    public static long computeCategorySize(Context context, String category) {
+        Uri collectionUri;
+        String[] projection = { MediaStore.MediaColumns.SIZE };
+        String selection = null;
+        String[] selectionArgs = null;
+
+        switch (category.toLowerCase()) {
+            case "images":
+                collectionUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                break;
+            case "videos":
+                collectionUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                break;
+            case "audio":
+                collectionUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                break;
+            case "documents":
+                collectionUri = MediaStore.Files.getContentUri("external");
+                selection = MediaStore.Files.FileColumns.MIME_TYPE + " IN (?, ?, ?, ?)";
+                selectionArgs = new String[] {
+                        "application/pdf", "application/msword",
+                        "application/vnd.ms-excel", "text/plain"
+                };
+                break;
+            default:
+                return 0;
+        }
+
+        long totalSize = 0;
+        try (Cursor cursor = context.getContentResolver().query(
+                collectionUri,
+                projection,
+                selection,
+                selectionArgs,
+                null
+        )) {
+            if (cursor != null) {
+                int sizeIndex = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE);
+                while (cursor.moveToNext()) {
+                    totalSize += cursor.getLong(sizeIndex);
+                }
+            }
+        }
+        return totalSize;
     }
 
     /*private static void getFilesRecursive(File dir, String category, List<File> categoryFiles) {

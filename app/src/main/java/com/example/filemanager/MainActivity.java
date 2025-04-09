@@ -10,6 +10,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -61,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private ItemAdapter<RecentAdapter> recentItemAdapter;
     private List<RecentAdapter> recentList;
     private String rootFile;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        progressBar = findViewById(R.id.progressBar);
 
         executorService = Executors.newSingleThreadExecutor();
         mainHandler = new Handler(Looper.getMainLooper());
@@ -145,10 +148,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadRecentFiles(String path) {
+        progressBar.setVisibility(View.VISIBLE);
         rootFile = path;
         File directory = new File(rootFile);
         if (!directory.exists() && !directory.isDirectory()) {
          //   Log.e("RecentFiles", "Directory does not exist " + rootFile);
+            progressBar.setVisibility(View.GONE);
             return;
         }
         executorService.execute(() ->{
@@ -171,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
                 recentItemAdapter.clear();
                 recentItemAdapter.add(recentList);
                 recentFastAdapter.notifyAdapterDataSetChanged();
+                progressBar.setVisibility(View.GONE);
             });
 
         });
@@ -238,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // If no cache or outdated, compute and update cache
                 if (categorySizeBytes == -1 || shouldRecompute) {
-                    categorySizeBytes = StorageHelper.computeCategorySize(categoryNames[i]);
+                    categorySizeBytes = StorageHelper.computeCategorySize(this,categoryNames[i]);
                     StorageHelper.updateCategorySizeCache(this, categoryNames[i], categorySizeBytes);
                 }
                 String formattedSize = StorageHelper.formatSize(categorySizeBytes);
