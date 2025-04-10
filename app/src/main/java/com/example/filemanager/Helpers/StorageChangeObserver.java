@@ -19,7 +19,6 @@ public class StorageChangeObserver extends FileObserver {
     @Override
     public void onEvent(int i, @Nullable String path) {
         if (path != null) {
-           // Log.d("StorageObserver", "File change detected: " + path);
             handler.removeCallbacks(callback);
             handler.postDelayed(callback, DEBOUNCE_DELAY_MS);
         }

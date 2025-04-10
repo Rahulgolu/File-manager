@@ -1,10 +1,11 @@
 package com.example.filemanager;
 
+import android.database.ContentObserver;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import android.provider.MediaStore;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -20,7 +21,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.filemanager.Adapter.FileAdapter;
 import com.example.filemanager.Helpers.MimeTypeHelper;
-import com.example.filemanager.Helpers.StorageChangeObserver;
 import com.example.filemanager.Helpers.StorageHelper;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.mikepenz.fastadapter.FastAdapter;
@@ -43,9 +43,8 @@ public class CategoryFilesActivity extends AppCompatActivity {
     private ExecutorService executorService;
     private Handler mainHandler;
     private ImageView backArrow;
-    private StorageChangeObserver storageObserver;
     private ProgressBar progressBar;
-    String categoryPath;
+    private ContentObserver mediaobserver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,15 +75,8 @@ public class CategoryFilesActivity extends AppCompatActivity {
             toolbarTitle.setText(category);
             loadFilesAsync(category);
         }
-
-        categoryPath = getCategoryPath(category);
-
-        storageObserver = new StorageChangeObserver(
-                categoryPath,
-                mainHandler,
-                () -> loadFilesAsync(category)
-        );
-        storageObserver.startWatching();
+        // it will observe if any changes in files
+        mediaobserver(category);
 
         backArrow.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -102,22 +94,38 @@ public class CategoryFilesActivity extends AppCompatActivity {
 
     }
 
-
-    private String getCategoryPath(String category) {
-        switch (category) {
+    private void mediaobserver(String category) {
+        Uri uri = null;
+        switch (category){
             case "Images":
-                return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getPath();
+                uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                break;
             case "Videos":
-                return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getPath();
+                uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                break;
             case "Audio":
-                return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).getPath();
+                uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                break;
             case "Document":
-                return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getPath();
+                uri = MediaStore.Files.getContentUri("external");
+                break;
             case "Download":
-                return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
+                uri = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
+                break;
+            case "Apps":
+                uri = MediaStore.Files.getContentUri("external");
+                break;
             default:
-                return Environment.getExternalStorageDirectory().getPath();
+                uri = MediaStore.Files.getContentUri("external");
         }
+        mediaobserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
+            @Override
+            public void onChange(boolean selfChange) {
+                super.onChange(selfChange);
+                loadFilesAsync(category);
+            }
+        };
+        getContentResolver().registerContentObserver(uri, true, mediaobserver);
     }
 
     private void loadFilesAsync(String category) {
@@ -160,8 +168,8 @@ public class CategoryFilesActivity extends AppCompatActivity {
             executorService.shutdown();
         }
 
-        if (storageObserver != null) {
-            storageObserver.stopWatching();
+        if (mediaobserver != null){
+            getContentResolver().unregisterContentObserver(mediaobserver);
         }
     }
 

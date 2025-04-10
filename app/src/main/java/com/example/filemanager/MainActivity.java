@@ -14,7 +14,6 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
-import android.widget.SearchView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -27,7 +26,6 @@ import com.example.filemanager.Adapter.FileAdapter;
 import com.example.filemanager.Adapter.RecentAdapter;
 import com.example.filemanager.Adapter.SearchAdapter;
 import com.example.filemanager.Helpers.MimeTypeHelper;
-import com.example.filemanager.Helpers.StorageChangeObserver;
 import com.example.filemanager.Helpers.StorageHelper;
 import com.example.filemanager.databinding.ActivityMainBinding;
 import com.example.filemanager.utils.Utils;
@@ -36,12 +34,10 @@ import com.mikepenz.fastadapter.adapters.ItemAdapter;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
@@ -51,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
     private List<CategoryAdapter> categoryList;
     private ExecutorService executorService;
     private Handler mainHandler;
-    private StorageChangeObserver storageObserver;
     int[] categoryIcons = {
             R.drawable.ic_image, R.drawable.ic_audio, R.drawable.ic_vedio,
             R.drawable.ic_apps, R.drawable.ic_documents, R.drawable.ic_download
@@ -97,17 +92,11 @@ public class MainActivity extends AppCompatActivity {
 
         rootDirectory = Environment.getExternalStorageDirectory();
         setupSearch();
-        loadCategorySizesAsync();
+        loadCategorySizes();
         itemAdapter.add(categoryList);
         binding.rv.setLayoutManager(new GridLayoutManager(this,2));
         binding.rv.setAdapter(fastAdapter);
         setInternalStorageView();
-        storageObserver = new StorageChangeObserver(
-                Environment.getExternalStorageDirectory().getPath(),
-                mainHandler,
-                this::loadCategorySizesAsync
-        );
-        storageObserver.startWatching();
 
         binding.llInternalStorage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -200,20 +189,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void searchForImages(File dir, List<File> mediaFiles) {
-        File[] files = dir.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile()) {
-                    if (MimeTypeHelper.isImage(file) || MimeTypeHelper.isVideo(file)) {
-                        mediaFiles.add(file);
-                    }
-                }else if (file.isDirectory()) {
-                    searchForImages(file, mediaFiles);
-                }
-            }
-        }
-    }
 
     public void setupSearch() {
         binding.searchView.getEditText().addTextChangedListener(new TextWatcher() {
@@ -250,19 +225,12 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void loadCategorySizesAsync() {
+    private void loadCategorySizes() {
         executorService.execute(() -> {
             List<CategoryAdapter> tempList = new ArrayList<>();
-            boolean shouldRecompute = StorageHelper.shouldRecomputeSizes(this);
 
             for (int i = 0; i < categoryNames.length; i++) {
-                long categorySizeBytes = StorageHelper.getCachedCategorySize(this, categoryNames[i]);
-
-                // If no cache or outdated, compute and update cache
-                if (categorySizeBytes == -1 || shouldRecompute) {
-                    categorySizeBytes = StorageHelper.computeCategorySize(this,categoryNames[i]);
-                    StorageHelper.updateCategorySizeCache(this, categoryNames[i], categorySizeBytes);
-                }
+                long categorySizeBytes = StorageHelper.computeCategorySize(this, categoryNames[i].toLowerCase());
                 String formattedSize = StorageHelper.formatSize(categorySizeBytes);
                 tempList.add(new CategoryAdapter(categoryNames[i], categoryIcons[i], formattedSize));
             }
@@ -328,9 +296,7 @@ public class MainActivity extends AppCompatActivity {
         if (executorService != null && !executorService.isShutdown()) {
             executorService.shutdown();
         }
-        if (storageObserver != null) {
-            storageObserver.stopWatching();
-        }
+
     }
 
     @Override
