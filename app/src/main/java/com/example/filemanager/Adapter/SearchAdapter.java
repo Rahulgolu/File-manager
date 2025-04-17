@@ -66,7 +66,6 @@ public class SearchAdapter extends ItemAdapter<FileAdapter> {
                 }
             }
         }*/
-
         File[] files = rootDir.listFiles();
         if (files != null) {
             for (File file1 : files){

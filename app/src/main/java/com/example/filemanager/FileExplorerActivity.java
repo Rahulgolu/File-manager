@@ -275,38 +275,15 @@ public class FileExplorerActivity extends AppCompatActivity {
         builder.setItems(foldernames, (DialogInterface dialog, int i) ->{
             File targetDir = directories[i];
             for (FileAdapter file : selectedItems){
-               copyFile(file.getFile(),targetDir);
+               FileUtils.copyFile(file.getFile(),targetDir);
             }
-        });
-
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-
-        builder.show();
-    }
-
-    private void copyFile(File sourceFile, File targetDir) {
-        if (!targetDir.isDirectory()){
-            Toast.makeText(this, "Invalid destination", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        File targetFile = new File(targetDir,sourceFile.getName());
-        try (FileInputStream inStream = new FileInputStream(sourceFile);
-             FileOutputStream outStream = new FileOutputStream(targetFile)) {
-
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inStream.read(buffer)) > 0) {
-                outStream.write(buffer, 0, length);
-            }
-
             Toast.makeText(this, "Copied successfully", Toast.LENGTH_SHORT).show();
             refreshFileList();
+        });
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Failed to copy", Toast.LENGTH_SHORT).show();
-        }
+        builder.setNegativeButton("Cancel", (dialog, i) -> dialog.dismiss());
+
+        builder.show();
     }
 
     private void showMoveDialog(List<FileAdapter> selectedFiles) {
@@ -327,29 +304,15 @@ public class FileExplorerActivity extends AppCompatActivity {
         builder.setItems(folderNames, (DialogInterface dialog, int i) -> {
             File targetDir = directories[i];
             for ( FileAdapter file : selectedFiles){
-                moveFile(file.getFile(),targetDir);
+                FileUtils.moveFile(file.getFile(), targetDir);
             }
+            Toast.makeText(this, "Moved successfully", Toast.LENGTH_SHORT).show();
+            refreshFileList();
         });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
         builder.show();
-    }
-
-    private void moveFile(File sourceFile, File targetDir) {
-        if (!targetDir.isDirectory()) {
-            Toast.makeText(this, "Invalid destination", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        File newFile = new File(targetDir, sourceFile.getName());
-
-        if (sourceFile.renameTo(newFile)) {
-            Toast.makeText(this, "Moved successfully", Toast.LENGTH_SHORT).show();
-            refreshFileList();
-        } else {
-            Toast.makeText(this, "Failed to move", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void showRenameDialog(File file) {
@@ -421,14 +384,25 @@ public class FileExplorerActivity extends AppCompatActivity {
             @Override
             public void onClick(@NonNull View v, int position, @NonNull FastAdapter<FileAdapter> fastAdapter, @NonNull FileAdapter item) {
                 PopupMenu popupMenu = new PopupMenu(v.getContext(), v);
-                popupMenu.getMenuInflater().inflate(R.menu.moreoption_menu, popupMenu.getMenu());
+                popupMenu.getMenuInflater().inflate(R.menu.multi_select_menu, popupMenu.getMenu());
 
                 popupMenu.setOnMenuItemClickListener(menuItem -> {
-                    if (menuItem.getItemId() == R.id.deletes) {
+                    if (menuItem.getItemId() == R.id.action_delete) {
                         if (FileUtils.deleteFile(item.getFile())) {
                             Toast.makeText(v.getContext(), "Deleted", Toast.LENGTH_SHORT).show();
                         }
                         refreshFileList();
+                        return true;
+                    } else if (menuItem.getItemId() == R.id.action_move) {
+                        List<FileAdapter> selectitem = Collections.singletonList(item);
+                        showMoveDialog(selectitem);
+                        return true;
+                    } else if (menuItem.getItemId() == R.id.action_copy) {
+                        List<FileAdapter> selectitem = Collections.singletonList(item);
+                        showCopyDialog(selectitem);
+                        return true;
+                    } else if (menuItem.getItemId() == R.id.action_rename) {
+                        showRenameDialog(item.getFile());
                         return true;
                     } else {
                         return false;

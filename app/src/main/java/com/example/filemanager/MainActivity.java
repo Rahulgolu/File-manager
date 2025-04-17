@@ -49,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
             R.drawable.ic_image, R.drawable.ic_audio, R.drawable.ic_vedio,
             R.drawable.ic_apps, R.drawable.ic_documents, R.drawable.ic_download
     };
-
     private ItemAdapter<FileAdapter> itemfileAdapter;
     private SearchAdapter searchAdapter;
     private FastAdapter<FileAdapter> fastAdapters;

@@ -111,10 +111,10 @@ public class CategoryFilesActivity extends AppCompatActivity {
             @Override
             public void onClick(@NonNull View v, int position, @NonNull FastAdapter<FileAdapter> fastAdapter, @NonNull FileAdapter item) {
                 PopupMenu popupMenu = new PopupMenu(v.getContext(), v);
-                popupMenu.getMenuInflater().inflate(R.menu.moreoption_menu, popupMenu.getMenu());
+                popupMenu.getMenuInflater().inflate(R.menu.multi_select_menu, popupMenu.getMenu());
 
                 popupMenu.setOnMenuItemClickListener(menuItem -> {
-                    if (menuItem.getItemId() == R.id.deletes) {
+                    if (menuItem.getItemId() == R.id.action_delete) {
                         if (FileUtils.deleteFile(item.getFile())) {
                             Toast.makeText(v.getContext(), "Deleted", Toast.LENGTH_SHORT).show();
                         }
