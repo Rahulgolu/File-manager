@@ -1,5 +1,4 @@
 package com.example.filemanager;
-
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -28,7 +27,6 @@ import com.example.filemanager.Adapter.SearchAdapter;
 import com.example.filemanager.Helpers.MimeTypeHelper;
 import com.example.filemanager.Helpers.StorageHelper;
 import com.example.filemanager.databinding.ActivityMainBinding;
-import com.example.filemanager.utils.Utils;
 import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.adapters.ItemAdapter;
 
@@ -60,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private ItemAdapter<RecentAdapter> recentItemAdapter;
     private List<RecentAdapter> recentList;
     private ProgressBar progressBar;
+    String pathfile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +67,8 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         progressBar = findViewById(R.id.progressBar);
+
+        pathfile = Environment.getDataDirectory().getAbsolutePath();
 
         executorService = Executors.newSingleThreadExecutor();
         mainHandler = new Handler(Looper.getMainLooper());
@@ -253,41 +254,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setInternalStorageView() {
-        getTotalInternalMemorySize();
-        getAvailableInternalMemorySize();
-
-        String formattedSize = "Size: " + Utils.formatSize(Utils.TOTAL_AVAILABLE_INTERNAL_SIZE) +
-                " / " + Utils.formatSize(Utils.TOTAL_INTERNAL_SIZE);
-
-        binding.tvInternalStorageSize.setText(formattedSize);
+        String storSize = getTotalInternalMemorySize(pathfile);
+        binding.tvInternalStorageSize.setText(storSize);
     }
 
-    public void getTotalInternalMemorySize() {
-        File path = Environment.getExternalStorageDirectory();
-        StatFs stat = new StatFs(path.getPath());
-        long blockSize = 0;
-        long totalBlocks = 0;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            blockSize = stat.getBlockSizeLong();
-            totalBlocks = stat.getBlockCountLong();
-        }
-        Utils.TOTAL_INTERNAL_SIZE = totalBlocks * blockSize;
-
+    public String getTotalInternalMemorySize(String path) {
+        StatFs statFs = new StatFs(path);
+        long totalBytes = statFs.getTotalBytes();
+        long freeBytes = statFs.getAvailableBytes();
+        long usedBytes = totalBytes - freeBytes;
+        return "Size: " + formatSize(usedBytes) + "/" +totalCapacityround(totalBytes);
     }
 
-    public void getAvailableInternalMemorySize() {
-        File path = Environment.getDataDirectory();
-        StatFs stat = new StatFs(path.getPath());
-        long blockSize = 0;
-        long availableBlocks = 0;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+    private String formatSize(long size) {
+        float gb = size / 1_000_000_000f;
+        return String.format(Locale.getDefault(), "%.0f GB", Math.ceil(gb));
+    }
 
-            blockSize = stat.getBlockSizeLong();
-            availableBlocks = stat.getAvailableBlocksLong();
+    private String totalCapacityround(long size) {
+        float gb = size / (1024f * 1024f * 1024f);
+        int rounded = 1;
+        while (rounded < gb) {
+            rounded *= 2;
         }
-
-        Utils.TOTAL_AVAILABLE_INTERNAL_SIZE = availableBlocks * blockSize;
-
+        return (rounded >= 1024) ? (rounded / 1024) + " TB" : rounded + " GB";
     }
 
     @Override

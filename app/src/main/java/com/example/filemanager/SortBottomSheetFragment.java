@@ -31,9 +31,6 @@ public class SortBottomSheetFragment extends BottomSheetDialogFragment {
         View view= inflater.inflate(R.layout.fragment_sort_bottom_sheet, container, false);
         radioGroup = view.findViewById(R.id.radioGroupSort);
 
-      //  SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-     //   String selectedSortOption = prefs.getString(KEY_SORT_OPTION, "Newest date first");
-
         String selectedSortOption = getSavedSortOption();
         if (selectedSortOption != null) {
             selectRadioButton(selectedSortOption);

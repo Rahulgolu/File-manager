@@ -24,7 +24,6 @@ public class SearchAdapter extends ItemAdapter<FileAdapter> {
 
 
     public void filter(File file,String query) {
-
         ExecutorService excutor = Executors.newSingleThreadExecutor();
         excutor.execute(new Runnable() {
             @Override
@@ -46,7 +45,7 @@ public class SearchAdapter extends ItemAdapter<FileAdapter> {
 
     private void searchFiles(File rootDir, String queryLower, List<FileAdapter> filteredList) {
 
-        Stack<File> stack = new Stack<>();
+      /*  Stack<File> stack = new Stack<>();
         stack.push(rootDir);
 
         while (!stack.isEmpty()) {
@@ -66,9 +65,9 @@ public class SearchAdapter extends ItemAdapter<FileAdapter> {
 
                 }
             }
-        }
+        }*/
 
-       /* File files[] = file.listFiles();
+        File[] files = rootDir.listFiles();
         if (files != null) {
             for (File file1 : files){
                 String s =file1.getName().toLowerCase();
@@ -81,7 +80,7 @@ public class SearchAdapter extends ItemAdapter<FileAdapter> {
                     searchFiles(file1,queryLower,filteredList);
                 }
             }
-        }*/
+        }
     }
 
 }

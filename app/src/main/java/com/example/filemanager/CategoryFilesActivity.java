@@ -1,5 +1,7 @@
 package com.example.filemanager;
 
+import static android.os.FileObserver.DELETE;
+
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Bundle;
@@ -8,10 +10,13 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -22,9 +27,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.filemanager.Adapter.FileAdapter;
 import com.example.filemanager.Helpers.MimeTypeHelper;
 import com.example.filemanager.Helpers.StorageHelper;
+import com.example.filemanager.utils.FileUtils;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.adapters.ItemAdapter;
+import com.mikepenz.fastadapter.listeners.ClickEventHook;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -92,6 +99,40 @@ public class CategoryFilesActivity extends AppCompatActivity {
             return true;
         });
 
+        fastAdapter.addEventHook(new ClickEventHook<FileAdapter>() {
+            @Override
+            public View onBind(RecyclerView.ViewHolder viewHolder) {
+                if (viewHolder instanceof FileAdapter.ViewHolder) {
+                    return ((FileAdapter.ViewHolder) viewHolder).moreIcon;
+                }
+                return null;
+            }
+
+            @Override
+            public void onClick(@NonNull View v, int position, @NonNull FastAdapter<FileAdapter> fastAdapter, @NonNull FileAdapter item) {
+                PopupMenu popupMenu = new PopupMenu(v.getContext(), v);
+                popupMenu.getMenuInflater().inflate(R.menu.moreoption_menu, popupMenu.getMenu());
+
+                popupMenu.setOnMenuItemClickListener(menuItem -> {
+                    if (menuItem.getItemId() == R.id.deletes) {
+                        if (FileUtils.deleteFile(item.getFile())) {
+                            Toast.makeText(v.getContext(), "Deleted", Toast.LENGTH_SHORT).show();
+                        }
+                        refreshFileList();
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+                popupMenu.show();
+            }
+        });
+
+    }
+
+    private void refreshFileList() {
+        loadFilesAsync(category);
+        fastAdapter.notifyDataSetChanged();
     }
 
     private void mediaobserver(String category) {

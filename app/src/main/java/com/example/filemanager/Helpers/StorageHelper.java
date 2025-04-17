@@ -12,30 +12,6 @@ import java.util.List;
 
 public class StorageHelper {
 
-   /* private static final String PREF_NAME = "CategorySizeCache";
-    private static final String TIMESTAMP_KEY = "LastUpdateTimestamp";*/
-
-    /*public static long getCachedCategorySize(Context context, String category) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        return prefs.getLong(category, -1);
-    }
-
-    public static void updateCategorySizeCache(Context context, String category, long size) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putLong(category, size);
-        editor.putLong(TIMESTAMP_KEY, System.currentTimeMillis()); // Store last update time
-        editor.apply();
-    }
-
-    public static boolean shouldRecomputeSizes(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        long lastUpdateTime = prefs.getLong(TIMESTAMP_KEY, 0);
-        long currentTime = System.currentTimeMillis();
-        // Recompute if 24 hours have passed
-        return (currentTime - lastUpdateTime) > 24 * 60 * 60 * 1000;
-    }*/
-
     public static String formatSize(long size) {
         if (size < 1024) return size + " B";
         // determine unit convert (kB, Mb,)
@@ -82,7 +58,11 @@ public class StorageHelper {
 
         try {
             Cursor cursor = context.getContentResolver().
-                    query(collection,projection,selection,selectionArgs,null);
+                    query(collection,
+                            projection,
+                            selection,
+                            selectionArgs,
+                            null);
             if (cursor !=  null){
                 int colunmIndex = cursor.getColumnIndexOrThrow(MediaStore.Files.FileColumns.DATA);
                 while (cursor.moveToNext()){

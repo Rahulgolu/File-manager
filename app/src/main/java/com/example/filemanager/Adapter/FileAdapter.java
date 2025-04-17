@@ -74,7 +74,7 @@ public class FileAdapter extends AbstractItem <FileAdapter.ViewHolder> {
 
     public class ViewHolder extends FastAdapter.ViewHolder<FileAdapter> {
         private TextView fileNameTextView, fileDateTextView;
-        private ImageView imageView,moreIcon;
+        public ImageView imageView,moreIcon;
         public ViewHolder(View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.fileIcon);

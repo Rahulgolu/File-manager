@@ -19,10 +19,12 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -37,9 +39,13 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.adapters.ItemAdapter;
+import com.mikepenz.fastadapter.listeners.ClickEventHook;
 import com.mikepenz.fastadapter.select.SelectExtension;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -103,9 +109,7 @@ public class FileExplorerActivity extends AppCompatActivity {
 
 
         loadFiles(currentPath);
-      //  applySorting(getSavedSortOption());
         updateBreadcrumbs(currentPath);
-
 
         setupItemClickListeners();
         setupSelectionToolbar();
@@ -150,20 +154,16 @@ public class FileExplorerActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Create New");
 
-        // Create Layout for Dialog
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(20, 20, 20, 20);
 
-        // Input Field for Name
         final EditText input = new EditText(this);
         input.setHint("Enter name");
         layout.addView(input);
 
-        // Add to Dialog
         builder.setView(layout);
 
-        // Buttons
         builder.setPositiveButton("Create Folder", (dialog, which) -> {
             String folderName = input.getText().toString().trim();
             if (!folderName.isEmpty()) {
@@ -172,15 +172,6 @@ public class FileExplorerActivity extends AppCompatActivity {
                 Toast.makeText(this, "Folder name cannot be empty", Toast.LENGTH_SHORT).show();
             }
         });
-
-        /*builder.setNegativeButton("Create File", (dialog, which) -> {
-            String fileName = input.getText().toString().trim();
-            if (!fileName.isEmpty()) {
-                createNewFile(fileName);
-            } else {
-                Toast.makeText(this, "File name cannot be empty", Toast.LENGTH_SHORT).show();
-            }
-        });*/
 
         builder.setNeutralButton("Cancel", (dialog, which) -> dialog.dismiss());
 
@@ -202,25 +193,6 @@ public class FileExplorerActivity extends AppCompatActivity {
         }
     }
 
-    private void createNewFile(String fileName) {
-        File newFile = new File(currentPath, fileName);
-
-        if (!newFile.exists()) {
-            try {
-                if (newFile.createNewFile()) {
-                    Toast.makeText(this, "File created: " + fileName, Toast.LENGTH_SHORT).show();
-                    refreshFileList();
-                } else {
-                    Toast.makeText(this, "Failed to create file", Toast.LENGTH_SHORT).show();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            Toast.makeText(this, "File already exists", Toast.LENGTH_SHORT).show();
-        }
-    }
 
     private void setupSelectionToolbar() {
         closeSelection.setOnClickListener(v -> exitSelectionMode());
@@ -270,13 +242,7 @@ public class FileExplorerActivity extends AppCompatActivity {
                 showMoveDialog(selectedItems);
                 break;
             case COPY:
-                File destination = new File("/path/to/destination");
-                if (!destination.exists())
-                    destination.mkdirs();
-                for (FileAdapter itms : selectedItems ){
-                    FileUtils.copyFile(itms.getFile(),destination);
-                }
-
+                 showCopyDialog(selectedItems);
                 break;
 
             case RENAME:
@@ -290,6 +256,57 @@ public class FileExplorerActivity extends AppCompatActivity {
 
         refreshFileList();
         exitSelectionMode();
+    }
+
+    private void showCopyDialog(List<FileAdapter> selectedItems) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Copy to");
+        File directory = new File(currentPath);
+        File[] directories = directory.listFiles(File::isDirectory);
+        if (directories == null || directories.length == 0){
+            Toast.makeText(this, "No folders available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String[] foldernames = new String[directories.length];
+        for(int i=0; i< directories.length; i++){
+            foldernames[i] = directories[i].getName();
+        }
+        builder.setItems(foldernames, (DialogInterface dialog, int i) ->{
+            File targetDir = directories[i];
+            for (FileAdapter file : selectedItems){
+               copyFile(file.getFile(),targetDir);
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+    private void copyFile(File sourceFile, File targetDir) {
+        if (!targetDir.isDirectory()){
+            Toast.makeText(this, "Invalid destination", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File targetFile = new File(targetDir,sourceFile.getName());
+        try (FileInputStream inStream = new FileInputStream(sourceFile);
+             FileOutputStream outStream = new FileOutputStream(targetFile)) {
+
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = inStream.read(buffer)) > 0) {
+                outStream.write(buffer, 0, length);
+            }
+
+            Toast.makeText(this, "Copied successfully", Toast.LENGTH_SHORT).show();
+            refreshFileList();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Failed to copy", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void showMoveDialog(List<FileAdapter> selectedFiles) {
@@ -391,31 +408,38 @@ public class FileExplorerActivity extends AppCompatActivity {
             }
             return false;
         });
-    }
 
-    /*private void openFile(File file) {
-
-        try {
-            Uri fileUri = FileUtils.getFileUri(this,file);
-            String mimeType = MimeTypeHelper.getMimeType(file);
-
-            if (mimeType == null) {
-                Toast.makeText(this, "Unsupported file type", Toast.LENGTH_SHORT).show();
-                return;
+        fastAdapter.addEventHook(new ClickEventHook<FileAdapter>() {
+            @Override
+            public View onBind(RecyclerView.ViewHolder viewHolder) {
+                if (viewHolder instanceof FileAdapter.ViewHolder) {
+                    return ((FileAdapter.ViewHolder) viewHolder).moreIcon;
+                }
+                return null;
             }
 
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.setDataAndType(fileUri, mimeType);
+            @Override
+            public void onClick(@NonNull View v, int position, @NonNull FastAdapter<FileAdapter> fastAdapter, @NonNull FileAdapter item) {
+                PopupMenu popupMenu = new PopupMenu(v.getContext(), v);
+                popupMenu.getMenuInflater().inflate(R.menu.moreoption_menu, popupMenu.getMenu());
 
-            this.startActivity(intent);
-        } catch (Exception e) {
-            Toast.makeText(this, "Cannot open file", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-        }
+                popupMenu.setOnMenuItemClickListener(menuItem -> {
+                    if (menuItem.getItemId() == R.id.deletes) {
+                        if (FileUtils.deleteFile(item.getFile())) {
+                            Toast.makeText(v.getContext(), "Deleted", Toast.LENGTH_SHORT).show();
+                        }
+                        refreshFileList();
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+                popupMenu.show();
+            }
+        });
 
-    }*/
+    }
+
 
     private void enterSelectionMode() {
         if (!isSelectionMode) {
@@ -447,7 +471,6 @@ public class FileExplorerActivity extends AppCompatActivity {
         File currentFile = new File(path);
         List<File> pathSegments = new ArrayList<>();
 
-
         while (currentFile != null) {
             pathSegments.add(0, currentFile);
             currentFile = currentFile.getParentFile();
@@ -468,7 +491,6 @@ public class FileExplorerActivity extends AppCompatActivity {
                 breadcrumbLayout.addView(createSeparator());
             }
         }
-
 
         for (int i = 0; i < pathSegments.size(); i++) {
             File segment = pathSegments.get(i);
